@@ -17,7 +17,7 @@ class Config:
     BESTMODEL_PATH = os.path.join(OUTPUT_DIR, 'best_model.pdparams')
 
 
-    MODEL_NAME="resnet50"#----------也可以选择"resnet18"
+    MODEL_NAME="googlenet"#----------也可以选择"resnet18"/"vgg16"/"resnet50"/"googlenet"
     NUM_CLASSES = 10
     # --- 模型与训练参数 ---
     PRETRAINED_MODEL = True

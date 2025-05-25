@@ -113,8 +113,8 @@ def train_and_validate(existing_label_map_path=None,
     print(f"开始训练，共{Config.EPOCHS}个Epochs...")
     for epoch in range(Config.EPOCHS):
         model.train()  # 设置模型为训练模式
-    epoch_train_loss = []
-    epoch_train_acc = []
+        epoch_train_loss = []
+        epoch_train_acc = []
 
     # --- 训练阶段 ---
     for batch_idx, (images, labels) in enumerate(train_loader):
@@ -292,6 +292,4 @@ if __name__ == '__main__':
 #     os.remove(Config.MODEL_SAVE_PATH)
 # if os.path.exists(Config.LABEL_MAP_FILE) and Config.LABEL_MAP_FILE.startswith(os.path.join(Config.OUTPUT_DIR, 'test_train_')): # 清理测试标签映射
 #     os.remove(Config.LABEL_MAP_FILE)
-
-print("train.py测试结束。")
 
