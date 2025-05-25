@@ -1,6 +1,8 @@
 # config.py
 import os
 import paddle
+from paddle.vision import resnet18
+
 
 class Config:
     # --- 路径配置 ---
@@ -14,9 +16,11 @@ class Config:
     SUBMISSION_FILE = os.path.join(OUTPUT_DIR, 'submission.json')
     BESTMODEL_PATH = os.path.join(OUTPUT_DIR, 'best_model.pdparams')
 
+
+    MODEL_NAME="resnet50"#----------也可以选择"resnet18"
+    NUM_CLASSES = 10
     # --- 模型与训练参数 ---
     PRETRAINED_MODEL = True
-    NUM_CLASSES = None
     EPOCHS = 20
     BATCH_SIZE = 32
     LEARNING_RATE = 1e-4

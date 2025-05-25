@@ -95,14 +95,13 @@ def run_training():
     """执行模型训练和验证"""
     print("--- 开始训练 ---")
     try:
-        from train import train_and_validate  # 假设 train_and_validate 在 train.py 中
+        from train import train_and_validate
     except ImportError:
         print("错误: 'train.py' 或其依赖项未能导入。")
         return False  # 表示训练失败
 
     trained_model_path = train_and_validate()  # 假设函数返回模型路径或None
     if trained_model_path and os.path.exists(trained_model_path):
-        print(f"--- 训练成功完成。模型保存在: {trained_model_path} ---")
         return True  # 表示训练成功
     else:
         print("--- 训练失败或未生成有效模型文件 ---")
@@ -111,7 +110,6 @@ def run_training():
 
 def run_prediction():
     """执行模型预测"""
-    print("--- 开始预测 ---")
     # 检查必要文件
     if not os.path.exists(Config.MODEL_SAVE_PATH):
         print(f"错误: 模型文件 {Config.MODEL_SAVE_PATH} 未找到。无法进行预测。")
@@ -145,13 +143,11 @@ def run_prediction():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="天气图像分类脚本")
+    parser = argparse.ArgumentParser(description="图像分类脚本")
     parser.add_argument('--mode', type=str, default='train_predict',
                         choices=['train', 'predict', 'train_predict', 'eda'],
                         help="运行模式: 'train' (仅训练), 'predict' (仅预测), "
                              "'train_predict' (先训练后预测), 'eda' (数据探索分析)")
-
-
     args = parser.parse_args()
 
     print(f"--- 脚本启动，当前工作目录: {os.getcwd()} ---")
@@ -168,9 +164,6 @@ def main():
 
     # 确保输出目录存在 (Config中应该已经处理，但这里再次确认无妨)
     Config.ensure_output_dirs()
-
-    training_successful = True  # 假设训练会成功，除非它明确失败
-
     if args.mode == 'eda':
         run_eda()
 
@@ -183,7 +176,6 @@ def main():
     elif args.mode == 'train_predict':
         training_successful = run_training()
         if training_successful:
-            print(" - -- 训练完成，接着进行预测 - --")
             run_prediction()
         else:
             print(" - -- 由于训练未成功，跳过预测步骤 - --")

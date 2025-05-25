@@ -9,7 +9,7 @@ import paddle
 from paddle.io import DataLoader
 
 from config import Config
-from model_def import WeatherModel  # 需要模型定义
+from Model import WeatherModel  # 需要模型定义
 from dataset_utils import WeatherDataset, load_image_paths_and_labels  # 需要Dataset和加载函数
 from paddle.vision import transforms
 
@@ -60,7 +60,11 @@ def predict_on_test_data(model_path_override=None,
 
     # 2. 初始化模型
     print("初始化模型...")
-    model = WeatherModel(num_classes=Config.NUM_CLASSES, pretrained_flag=False)  # 使用从标签映射得到的类别数
+    model = WeatherModel(
+        model_name=Config.MODEL_NAME,  # <--- **关键修改：从 Config 传递 model_name**
+        num_classes=Config.NUM_CLASSES,
+        pretrained_flag=False  # 预测时加载自己的权重，所以 backbone 不需要预训练
+    )
 
     # 3. 加载模型权重
     if not os.path.exists(Config.MODEL_SAVE_PATH):
@@ -179,75 +183,4 @@ def predict_on_test_data(model_path_override=None,
 
     return df_to_return  # <--- 确保返回的是 DataFrame
 
-# ... (if __name__ == '__main__': 测试块) ...
-if __name__ == '__main__':
-    print("预测脚本 (predict.py) 测试:")
-    Config.ensure_output_dirs()
 
-    # --- 准备虚拟文件和目录 ---
-    dummy_label_map_path = os.path.join(Config.OUTPUT_DIR, 'dummy_predict_label_map.json')
-    dummy_model_path = os.path.join(Config.OUTPUT_DIR, 'dummy_predict_model.pdparams')
-    dummy_test_dir = './dummy_test_for_predict_script'
-    dummy_submission_file = os.path.join(Config.OUTPUT_DIR, 'dummy_submission.json')
-
-    # 1. 创建虚拟标签映射 (与模型输出类别数一致)
-    print(f"为 predict.py 测试创建虚拟标签映射文件: {dummy_label_map_path}")
-    dummy_map_content = {
-        "label_to_int": {"sunny": 0, "cloudy": 1},
-        "int_to_label": {"0": "sunny", "1": "cloudy"}  # 注意键是字符串
-    }
-    with open(dummy_label_map_path, 'w') as f:
-        json.dump(dummy_map_content, f)
-
-    # 2. 创建一个非常简单的虚拟模型并保存其状态 (ResNet18结构，但随机权重)
-    print(f"为 predict.py 测试创建虚拟模型文件: {dummy_model_path}")
-    # 确保 num_classes 与 dummy_map_content 匹配
-    try:
-        # 这里需要导入 WeatherModel
-        from model_def import WeatherModel
-
-        dummy_model = WeatherModel(num_classes=len(dummy_map_content["label_to_int"]))
-        paddle.save(dummy_model.state_dict(), dummy_model_path)
-    except ImportError:
-        print("错误: 无法导入 WeatherModel。请确保 model.py 可访问且 WeatherModel 已定义。")
-        exit()
-    except Exception as e:
-        print(f"创建虚拟模型时出错: {e}")
-        exit()
-
-    # 3. 创建虚拟测试数据
-    print(f"为 predict.py 测试创建虚拟测试数据于: {dummy_test_dir}")
-    if os.path.exists(dummy_test_dir):
-        shutil.rmtree(dummy_test_dir)
-    os.makedirs(dummy_test_dir, exist_ok=True)
-    # 测试数据直接放在 TEST_DIR 下，没有子目录标签
-    Image.new('RGB', (Config.CROP_SIZE[0] + 10, Config.CROP_SIZE[1] + 10), color='orange').save(
-        os.path.join(dummy_test_dir, 'test_image_1.jpg'))
-    Image.new('RGB', (Config.CROP_SIZE[0] + 5, Config.CROP_SIZE[1] + 15), color='pink').save(
-        os.path.join(dummy_test_dir, 'test_image_2.png'))
-
-    # --- 执行预测 ---
-    print("- -- predict.pyTestScenario: RunningPrediction - --")
-    results = predict_on_test_data(
-        model_path_override=dummy_model_path,
-        label_map_path_override=dummy_label_map_path,
-        test_dir_override=dummy_test_dir,
-        submission_file_override=dummy_submission_file
-    )
-
-    assert results is not None, "预测过程失败或返回 None"
-    assert os.path.exists(dummy_submission_file), "预测提交文件未创建"
-    with open(dummy_submission_file, 'r') as f:
-        submission_content = json.load(f)
-    assert len(submission_content) == 2, "提交文件中的记录数不等于测试图像数"
-    assert {"filename": "test_image_1.jpg", "label": "sunny"} in submission_content or \
-           {"filename": "test_image_1.jpg", "label": "cloudy"} in submission_content  # 标签是随机的，只要格式对就行
-
-    # --- 清理 ---
-    print("Cleaninguptestfilesfor predict.py...")
-    if os.path.exists(dummy_label_map_path): os.remove(dummy_label_map_path)
-    if os.path.exists(dummy_model_path): os.remove(dummy_model_path)
-    if os.path.exists(dummy_test_dir): shutil.rmtree(dummy_test_dir)
-    if os.path.exists(dummy_submission_file): os.remove(dummy_submission_file)
-
-    print("预测脚本 (predict.py) 测试完成。")

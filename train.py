@@ -10,7 +10,7 @@ from PIL import Image  # 用于在测试块中创建虚拟图片
 
 from config import Config
 from dataset_utils import load_image_paths_and_labels, prepare_dataloaders
-from model_def import WeatherModel
+from Model import WeatherModel
 
 
 def train_and_validate(existing_label_map_path=None,
@@ -33,18 +33,6 @@ def train_and_validate(existing_label_map_path=None,
     }
 
     best_model_path = None
-    if train_dir_override:
-        Config.TRAIN_DIR = train_dir_override
-        print(f"Config.TRAIN_DIR overridden to: {Config.TRAIN_DIR}")
-    if epochs_override is not None:
-        Config.EPOCHS = epochs_override
-        print(f"Config.EPOCHS overridden to: {Config.EPOCHS}")
-    if batch_size_override:
-        Config.BATCH_SIZE = batch_size_override
-        print(f"Config.BATCH_SIZE overridden to: {Config.BATCH_SIZE}")
-    if val_split_override is not None:
-        Config.VALIDATION_SPLIT_SIZE = val_split_override
-        print(f"Config.VALIDATION_SPLIT_SIZE overridden to: {Config.VALIDATION_SPLIT_SIZE}")
 
     Config.ensure_output_dirs()  # 确保输出目录（可能基于覆盖的Config）存在
     print(f"使用设备: {Config.DEVICE}")
@@ -97,19 +85,6 @@ def train_and_validate(existing_label_map_path=None,
         for key, value in original_config_values.items(): setattr(Config, key, value)
         return None
 
-    # Config.NUM_CLASSES 应该已经在 prepare_dataloaders 内部被正确设置
-    # 我们再次确认一下
-    num_classes_from_map = len(final_label_to_int_map)
-    if Config.NUM_CLASSES != num_classes_from_map:
-        print(f"警告: Config.NUM_CLASSES ({Config.NUM_CLASSES}) 与从最终标签映射得到的类别数 ({num_classes_from_map}) 不一致。已自动校正为 {num_classes_from_map}。")
-        Config.NUM_CLASSES = num_classes_from_map # 确保一致性
-
-    if Config.NUM_CLASSES <= 0:
-        print(f"错误: 最终确定的类别数 ({Config.NUM_CLASSES}) 无效。训练中止。")
-        # 恢复 Config
-        for key, value in original_config_values.items(): setattr(Config, key, value)
-        return None
-
     print(f"数据加载和预处理完成。最终训练类别数: {Config.NUM_CLASSES}")
     print(f"最终使用的标签映射 (label_to_int): {final_label_to_int_map}")
     if os.path.exists(Config.LABEL_MAP_FILE):
@@ -120,7 +95,13 @@ def train_and_validate(existing_label_map_path=None,
         print(f"警告: 标签映射文件 {Config.LABEL_MAP_FILE} 未找到，即使数据加载完成。请检查 prepare_dataloaders 实现。")
     # 2. 初始化模型
     print("初始化模型...")
-    model = WeatherModel(num_classes=Config.NUM_CLASSES)
+    print(f"初始化模型 (模型名称: {Config.MODEL_NAME}, 类别数: {Config.NUM_CLASSES})...")
+    # model = WeatherModel(num_classes=Config.NUM_CLASSES) # 旧的方式
+    model = WeatherModel(
+        model_name=Config.MODEL_NAME,  # 从 Config 中传递模型名称
+        num_classes=Config.NUM_CLASSES,
+        pretrained_flag=True
+    )
     model.to(Config.DEVICE)
 
     # 3. 定义损失函数和优化器
