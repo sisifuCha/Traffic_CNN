@@ -84,10 +84,10 @@ def predict_on_test_data(model_path_override=None,
     test_transform = transforms.Compose([
         transforms.Resize(Config.IMAGE_SIZE),  # 例如 (125, 125)
         transforms.ToTensor(),
-        transforms.Normalize(mean=Config.MEAN, std=Config.STD)
+        transforms.Normalize(mean=Config.NORM_MEAN, std=Config.NORM_STD)
     ])
     print(
-        f"信息: 测试图像将使用以下变换: Resize to {Config.IMAGE_SIZE}, ToTensor, Normalize(mean={Config.MEAN}, std={Config.STD})")
+        f"信息: 测试图像将使用以下变换: Resize to {Config.IMAGE_SIZE}, ToTensor, Normalize(mean={Config.NORM_MEAN}, std={Config.NORM_STD})")
 
     # 5. 加载测试数据集的路径信息
     print(f"从 {Config.TEST_DIR} 加载测试数据路径...")
@@ -125,7 +125,6 @@ def predict_on_test_data(model_path_override=None,
         num_workers=Config.NUM_WORKERS,
         drop_last=False  # 测试时通常处理所有样本
     )
-
     # 7. 进行预测
     predictions_indices = []  # 存储预测的类别索引
     actual_filenames = []  # 存储对应的文件名

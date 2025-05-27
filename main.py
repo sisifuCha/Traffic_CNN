@@ -12,7 +12,8 @@ import sys  # 用于在某些情况下退出
 #     sys.path.append(PROJECT_ROOT)
 
 from config import Config
-
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='paddle.nn.layer.norm')
 
 def run_eda():
     """执行探索性数据分析 (EDA)"""
@@ -45,15 +46,14 @@ def run_eda():
         return
 
     print("训练数据标签分布: ")
-    print(train_df_eda['label_str'].value_counts())
+    print(train_df_eda['label'].value_counts())
 
     print("随机显示几张训练图片: ")
     # 修正：确保样本数量不超过 DataFrame 长度
     num_samples_to_show = min(9, len(train_df_eda))
     if num_samples_to_show == 0:
         print("没有样本可供显示。")
-    print("--- EDA结束 ---")
-    return
+        print("--- EDA结束 ---")
 
     sample_eda_df = train_df_eda.sample(n=num_samples_to_show, random_state=Config.RANDOM_SEED)
 
@@ -71,18 +71,18 @@ def run_eda():
     for i, row_data in enumerate(sample_eda_df.itertuples()):
         plt.subplot(rows, cols, i + 1)
         try:
-            img = Image.open(row_data.filename).convert('RGB')
+            img = Image.open(row_data.image_path).convert('RGB')
             plt.imshow(img)
-            title = f"Label: {row_data.label_str}Size: {img.size}"
+            title = f"Label: {row_data.label}Size: {img.size}"
             if hasattr(row_data, 'original_filename'):  # 如果有原始文件名
                 title += f"File: {os.path.basename(row_data.original_filename)}"
             plt.title(title, fontsize=8)  # 调小字体以适应更多信息
         except FileNotFoundError:
-            plt.text(0.5, 0.5, f'Img not found:{os.path.basename(row_data.filename)}', ha='center', va='center', color='red', fontsize=8)
-            print(f"EDA: 图像文件未找到 {row_data.filename}")
+            plt.text(0.5, 0.5, f'Img not found:{os.path.basename(row_data.image_path)}', ha='center', va='center', color='red', fontsize=8)
+            print(f"EDA: 图像文件未找到 {row_data.image_path}")
         except Exception as e:
             plt.text(0.5, 0.5, 'Error loading img', ha='center', va='center', color='red', fontsize=8)
-            print(f"EDA: 加载图像 {row_data.filename} 时发生错误: {e}")
+            print(f"EDA: 加载图像 {row_data.image_path} 时发生错误: {e}")
         plt.axis('off')
 
     plt.tight_layout()

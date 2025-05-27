@@ -25,75 +25,6 @@ class WeatherDataset(Dataset):
         self.is_test_set = is_test_set
         self.transform = transform # 存储传入的 transform
 
-    #     # 确保测试集DataFrame包含 'original_filename' 列
-    #     if self.is_test_set:
-    #         if 'original_filename' not in self.df.columns:
-    #             if 'filename' in self.df.columns:
-    #                 print("提示: 测试集DataFrame中未找到 'original_filename' 列，从 'filename' 列创建。")
-    #                 self.df['original_filename'] = self.df['filename'].apply(os.path.basename)
-    #             else:
-    #                 raise ValueError("测试集DataFrame必须包含 'original_filename' 或 'filename' 列。")
-    #
-    #     # 定义图像变换
-    #     # 如果是测试集，则 for_training 参数无效，总是使用非训练变换
-    #     apply_training_transforms = for_training and not self.is_test_set
-    #
-    #     if apply_training_transforms:
-    #         # 训练集变换 (通常包括数据增强)
-    #         self.transform = transforms.Compose([
-    #             transforms.Resize(size=[int(s * 1.125) for s in Config.CROP_SIZE]),  # 先放大一点
-    #             transforms.RandomResizedCrop(Config.CROP_SIZE, scale=(0.8, 1.0)),
-    #             transforms.RandomHorizontalFlip(prob=0.5),
-    #             transforms.RandomRotation(degrees=10),
-    #             # 可以考虑添加 ColorJitter 等
-    #             transforms.ToTensor(),
-    #             transforms.Normalize(mean=Config.NORM_MEAN, std=Config.NORM_STD)
-    #         ])
-    #     else:
-    #         # 验证集或测试集变换 (通常不包括数据增强)
-    #         self.transform = transforms.Compose([
-    #             transforms.Resize(Config.RESIZE_SHAPE),  # 先resize到一个固定尺寸
-    #             transforms.CenterCrop(Config.CROP_SIZE),  # 然后中心裁剪
-    #             transforms.ToTensor(),
-    #             transforms.Normalize(mean=Config.NORM_MEAN, std=Config.NORM_STD)
-    #         ])
-    #
-    # def __getitem__(self, index):
-    #     row = self.df.iloc[index]
-    #     img_path = row['filename']
-    #     image_load_failed = False
-    #
-    #     try:
-    #         image = Image.open(img_path).convert('RGB')
-    #     except FileNotFoundError:
-    #         print(f"错误: 图像文件未找到 {img_path}。将使用占位符图像。")
-    #         image = Image.new('RGB', Config.CROP_SIZE, (0, 0, 0))  # 黑色占位符
-    #         image_load_failed = True
-    #     except Exception as e:
-    #         print(f"错误: 读取图像 {img_path} 失败 ({e})。将使用占位符图像。")
-    #         image = Image.new('RGB', Config.CROP_SIZE, (0, 0, 0))
-    #         image_load_failed = True
-    #
-    #     image_tensor = self.transform(image)
-    #
-    #     if self.is_test_set:
-    #         # 测试集返回图像张量和原始文件名
-    #         original_filename = row['original_filename']
-    #         if image_load_failed:
-    #             original_filename += "_LOAD_ERROR"  # 标记加载失败的图像
-    #         return image_tensor, original_filename
-    #     else:
-    #         # 训练/验证集返回图像张量和标签张量
-    #         if 'label_int' not in row or pd.isna(row['label_int']):
-    #             print(f"警告: {img_path} 的标签 'label_int' 缺失或为NaN。使用占位符标签 -1。")
-    #             label_tensor = paddle.to_tensor(-1, dtype='int64')  # 使用一个特殊值表示无效标签
-    #         else:
-    #             label_int = int(row['label_int'])
-    #             label_tensor = paddle.to_tensor(label_int, dtype='int64')
-    #         return image_tensor, label_tensor
-    #
-    # def __len__(self):
-    #     return len(self.df)
         # 在 __init__ 中进行必要的检查
         if 'image_path' not in self.df.columns:
             raise ValueError("DataFrame 中必须包含 'image_path' 列。")
@@ -170,9 +101,6 @@ def find_image_files_recursively_for_test(directory_path):
 def load_image_paths_and_labels(data_dir: str,
                                 label_to_int_map_to_use=None,
                                 is_test_set=False,
-                                create_map_if_not_provided=False,
-                                label_map_save_path=None
-                                # --- 结束原有参数 ---
                                 ):
     """
     从目录结构加载图像路径和标签。
@@ -190,20 +118,6 @@ def load_image_paths_and_labels(data_dir: str,
     current_int_to_label = {}
 
     if is_test_set:
-         # 测试集：图像直接在 data_dir 下，没有类别子目录
-        # for item_name in sorted(os.listdir(data_dir)):
-        #     full_item_path = os.path.join(data_dir, item_name)
-        #     # 确保只处理文件，并且是支持的图像类型
-        #     if os.path.isfile(full_item_path) and item_name.lower().endswith(Config.SUPPORTED_IMAGE_FORMATS):
-        #         image_paths.append(full_item_path)
-        #         original_filenames.append(item_name)  # item_name 就是原始文件名
-        #         labels_str.append("unknown")  # 测试集标签未知
-        #         labels_int.append(-1)  # 使用 -1 作为占位符
-        # # 对于测试集，通常使用从训练集加载的标签映射（如果预测时需要类别名转换）
-        # # 这里我们仅返回空的或传入的映射，因为测试数据本身不用于生成映射
-        # current_label_to_int = label_to_int_map_to_use if label_to_int_map_to_use is not None else {}
-        # if current_label_to_int:
-        #     current_int_to_label = {str(v): k for k, v in current_label_to_int.items()}
          print(f"信息: 正在从 '{data_dir}' 递归加载测试图像...")
          # 使用新的辅助函数来获取图像路径和文件名
          image_paths, image_filenames = find_image_files_recursively_for_test(data_dir)
@@ -269,9 +183,6 @@ def load_image_paths_and_labels(data_dir: str,
     print(df.head())
     return df, current_label_to_int, current_int_to_label
 
-    return df, current_label_to_int, current_int_to_label
-
-
 def prepare_dataloaders(existing_label_to_int_map: dict = None):
     """
     准备训练和验证的DataLoader。
@@ -287,13 +198,13 @@ def prepare_dataloaders(existing_label_to_int_map: dict = None):
         # transforms.RandomHorizontalFlip(),
         # transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
         transforms.ToTensor(),
-        transforms.Normalize(mean=Config.MEAN, std=Config.STD) # 使用Config中的均值和标准差
+        transforms.Normalize(mean=Config.NORM_MEAN, std=Config.NORM_STD) # 使用Config中的均值和标准差
     ])
     # 验证集/测试集通常只有基础转换
     val_transform = transforms.Compose([
         transforms.Resize(Config.IMAGE_SIZE),
         transforms.ToTensor(),
-        transforms.Normalize(mean=Config.MEAN, std=Config.STD)
+        transforms.Normalize(mean=Config.NORM_MEAN, std=Config.NORM_STD)
     ])
 
     if not os.path.exists(Config.TRAIN_DIR) or not os.listdir(Config.TRAIN_DIR):

@@ -14,16 +14,16 @@ class Config:
     MODEL_SAVE_PATH = os.path.join(OUTPUT_DIR, 'weather_classifier_model.pdparams')
     LABEL_MAP_FILE = os.path.join(OUTPUT_DIR, 'label_map.json')
     SUBMISSION_FILE = os.path.join(OUTPUT_DIR, 'submission.json')
-    BESTMODEL_PATH = os.path.join(OUTPUT_DIR, 'best_model.pdparams')
+    # BESTMODEL_PATH = os.path.join(OUTPUT_DIR, 'best_model.pdparams')
 
 
     MODEL_NAME="googlenet"#----------也可以选择"resnet18"/"vgg16"/"resnet50"/"googlenet"
     NUM_CLASSES = 10
     # --- 模型与训练参数 ---
     PRETRAINED_MODEL = True
-    EPOCHS = 20
-    BATCH_SIZE = 32
-    LEARNING_RATE = 1e-4
+    EPOCHS = 4
+    BATCH_SIZE = 64
+    LEARNING_RATE = 1e-2
     VALIDATION_SPLIT_SIZE = 0.2
     RANDOM_SEED = 42
 
@@ -32,12 +32,9 @@ class Config:
     CROP_SIZE = (125, 125)
     IMAGE_SIZE = (224,224)
     # ImageNet 标准的均值和标准差
-    NORM_MEAN = [0.485, 0.456, 0.406]  # <--- 添加这一行
-    NORM_STD = [0.229, 0.224, 0.225]   # <--- 添加这一行
+    NORM_MEAN = [0.5, 0.5, 0.5]  # <--- 添加这一行  //原始是0.5,0.5[0.485, 0.456, 0.406]
+    NORM_STD = [0.5, 0.5, 0.5]   # <--- 添加这一行[0.229, 0.224, 0.225]
     SUPPORTED_IMAGE_FORMATS = '.jpg'  # 这是一个元组，包含所有支持的图片扩展名
-
-    MEAN = [0.485, 0.456, 0.406]  # R, G, B 通道的均值
-    STD = [0.229, 0.224, 0.225]  # R, G, B 通道的标准差
 
     # --- 其他配置 ---
     LOG_INTERVAL = 10
